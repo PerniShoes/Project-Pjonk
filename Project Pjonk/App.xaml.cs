@@ -1,5 +1,6 @@
 ﻿using System.Configuration;
 using System.Data;
+using System.Net.Http;
 using System.Windows;
 using System.Windows.Input;
 using Hardcodet.Wpf.TaskbarNotification;
@@ -22,10 +23,11 @@ namespace Project_Pjonk
 
         private void InitializePetWindows()
         {
-            PetWindow pet1 = new("Media/DoggoTest.png", SystemParameters.FullPrimaryScreenWidth - 150.0);
-            //PetWindow pet2 = new("Media/PuppyTest.png", 100.0);
+            PetWindow pet1 = new("Media/DoggoTest.png", SystemParameters.FullPrimaryScreenWidth - 350.0);
+            PetWindow pet2 = new("Media/PuppyTest.png", 100.0);
             pet1.Show();
             //pet2.Show();
+
         }
 
         private void InitializeTaskbarIcon()
