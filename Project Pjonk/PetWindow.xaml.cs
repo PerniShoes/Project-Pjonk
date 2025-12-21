@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics.Arm;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
+using System.Windows.Forms;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using System.Windows.Forms;
 
 namespace Project_Pjonk
 {
@@ -17,23 +20,41 @@ namespace Project_Pjonk
     enum PetState
     {
         Idle,
-        Moving,
+        Walking,
         Sleeping,
         Falling,
-        Sliding
+        Jumping,
+        Sliding,
+        Static
     }
+    public enum RandomBias
+    {
+        None,
+        Low,
+        Middle,
+        High
+    }
+
 
     public partial class PetWindow : Window
     {
+        private AnimationManager animationManager = new();
         // Physics
         private const double Gravity = 3000;
         private const double TerminalVelocity = 7000;
         private const double GroundSnapTolerance = 5;
         private const double HorizontalFriction = 0.999;
+        private const double JumpVelocityMinY = -200; 
+        private const double JumpVelocityMaxY = -4000; 
+        private const double turboJumpVelocityY = -20000;
+        private const double JumpVelocityMinX = 300; 
+        private const double JumpVelocityMaxX = 2000;
+        private const double MaxDt = 1.0 / 30.0; // 30 FPS
+        private const double MinDt = 0.0001;     
+
 
         private Vector velocity = new(0.0,0.0);
 
-        // Test for momentum
         private readonly Queue<(Point pos, DateTime time)> mouseHistory = new();
         private const int MaxHistory = 5;
 
@@ -46,19 +67,31 @@ namespace Project_Pjonk
         // State-behaviour
         private bool isGrounded;
         private PetState currentState = PetState.Idle;
+        private PetState previousState = PetState.Idle;
         private DateTime stateStartTime;
         private Random random = new();
         private double targetX = 10;
 
         private DateTime lastUpdate = DateTime.Now;
-        private double speed = 300;
+
+        private double minSpeed = 100;
+        private double maxSpeed = 400;
+        private double currentSpeed = 0;
         private Point position;
+        private const double BaseSize = 64;
 
         public PetWindow(string imagePath, double startX)
-        {   
+        {
+            // Animation
+            animationManager.AddAnimation(PetState.Idle, new Animation("Media/Sprites/IdleSheet.png", 9, 0.2));
+            animationManager.AddAnimation(PetState.Walking, new Animation("Media/Sprites/Static.png", 1, 0.2));
+            animationManager.AddAnimation(PetState.Static, new Animation("Media/Sprites/Static.png", 1, 0.2));
+            animationManager.AddAnimation(PetState.Sleeping, new Animation("Media/Sprites/SleepSheet.png", 21, 0.15));
+            animationManager.AddAnimation(PetState.Jumping, new Animation("Media/Sprites/Jump.png", 1, 0.2));
+
             // Temp hardcoded
-            Width = 128;
-            Height = 128;
+            Width = 64;
+            Height = 64;
             // 
             AllowsTransparency = true;
             WindowStyle = WindowStyle.None;
@@ -70,6 +103,8 @@ namespace Project_Pjonk
             petImage.Source = new BitmapImage(new Uri(imagePath, UriKind.Relative));
             petImage.IsHitTestVisible = true;
             Content = petImage;
+            petImage.RenderTransformOrigin = new Point(0.5, 0.5);
+            petImage.RenderTransform = new ScaleTransform(1, 1);
 
             position = new(startX, SystemParameters.WorkArea.Bottom - Height - 250);
             UpdateWindowPosition();
@@ -89,14 +124,22 @@ namespace Project_Pjonk
             petImage.MouseMove += PetMouseMove;
             this.PreviewKeyDown += PetKeyDown;
 
-            currentState = PetState.Idle;
+            EnterSleepState();
         }
-
+        public void SetScale(double scale)
+        {
+            Width = BaseSize * scale;
+            Height = BaseSize * scale;
+        }
         private void Update(object? sender, EventArgs e)
         {
             double dt = (DateTime.Now - lastUpdate).TotalSeconds;
-            lastUpdate = DateTime.Now; 
+            lastUpdate = DateTime.Now;
 
+            if (dt > MaxDt) dt = MaxDt;
+            if (dt < MinDt) dt = MinDt;
+
+            PetState newState = currentState;
             if (!isDragged)
             {
                 ApplyGravity(dt);
@@ -109,20 +152,77 @@ namespace Project_Pjonk
                     PetBehaviour();
                 }
             }
+            else
+            {
+                velocity = new(0.0, 0.0);
+            }
+            if(newState != currentState)
+            {
+                previousState = newState;
+            }
+
+            // Animation
+            switch (currentState)
+            {
+                case PetState.Sliding:
+                    animationManager.Play(PetState.Walking);
+                    break;
+                case PetState.Falling:
+                    animationManager.Play(PetState.Idle);
+                    break;
+                default:
+                    animationManager.Play(currentState);
+                    break;
+
+            }
+            animationManager.Update(dt);
+            var frame = animationManager.GetCurrentFrame();
+            if (frame != null)
+            {
+                petImage.Source = frame;
+            }
+            //
+
             UpdateWindowPosition();
         }
+        private double RandomRange(double min, double max, RandomBias bias = RandomBias.None)
+        {
+            double t = random.NextDouble();
+
+            switch (bias)
+            {
+                case RandomBias.Low:
+                    t = (t*t*t);              
+                    break;
+
+                case RandomBias.High:
+                    t = 1.0 - (1.0 - t) * (1.0 - t); 
+                    break;
+                case RandomBias.Middle:
+                    t = 0.5 + (t - 0.5) * 0.5;
+                    break;
+
+                case RandomBias.None:
+                default:
+                    break;
+            }
+
+            return min + t * (max - min);
+        }
+
         private void UpdateWindowPosition()
         {
             Left = position.X;
             Top = position.Y;
         }
-        private void TeleportPetToScreen()
+        public void TeleportPetToScreen()
         {
             position.X = SystemParameters.PrimaryScreenWidth / 2.0 - Width / 2.0;
             position.Y = SystemParameters.PrimaryScreenHeight / 2.0 - Height / 2.0;
-
+            
             velocity = new Vector(0, 0);
             isGrounded = false;
+            isDragged = false;
             currentState = PetState.Falling;
             UpdateWindowPosition();
         }
@@ -143,6 +243,7 @@ namespace Project_Pjonk
             clickOffset = new(mouse_DIU.X - Left, mouse_DIU.Y - Top);
 
             velocity = new(0.0, 0.0);
+            currentState = PetState.Static;
             petImage.CaptureMouse();
         }
         private void PetMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
@@ -153,6 +254,8 @@ namespace Project_Pjonk
 
             position.X = mouse_DIU.X - clickOffset.X;
             position.Y = mouse_DIU.Y - clickOffset.Y;
+            velocity = new(0.0, 0.0);
+            currentState = PetState.Static;
 
             mouseHistory.Enqueue((mouse_DIU, DateTime.Now));
             if (mouseHistory.Count > MaxHistory)
@@ -201,31 +304,91 @@ namespace Project_Pjonk
         private void MoveTowardsTarget()
         {
             double direction = Math.Sign(targetX - Left);
-            velocity.X = direction * speed;
+            velocity.X = direction * currentSpeed;
         }
         private void EnterSleepState()
         {
             currentState = PetState.Sleeping;
-            petImage.Source = new BitmapImage(new Uri("Media/SleepingDoggo.png", UriKind.Relative));
             stateStartTime = DateTime.Now;
         }
+        private void EnterJumpState()
+        {
+            if (!isGrounded) return;
 
+            isGrounded = false;
+            currentState = PetState.Jumping;
+
+            velocity.Y = RandomRange(JumpVelocityMinY, JumpVelocityMaxY, RandomBias.Low);
+            double jumpX = RandomRange(JumpVelocityMinX, JumpVelocityMaxX, RandomBias.Middle);
+
+            if (velocity.Y > JumpVelocityMinY)
+            {
+                velocity.Y = JumpVelocityMinY;
+            }
+            if (random.NextDouble() < 0.08)
+            {
+                velocity.Y = turboJumpVelocityY;
+            }
+            double direction;
+            if (Math.Abs(velocity.X) > 1)
+            {
+                direction = Math.Sign(velocity.X);
+            }
+            else
+            {
+                direction = random.Next(0, 2) == 0 ? -1 : 1;
+            }
+
+            velocity.X = jumpX * direction;
+            UpdateSpriteDirection();
+            stateStartTime = DateTime.Now;
+        }
         private void EnterIdleState()
         {
-           currentState = PetState.Idle;
-            petImage.Source = new BitmapImage(new Uri("Media/DoggoTest.png", UriKind.Relative));
+            currentState = PetState.Idle;
             stateStartTime = DateTime.Now;
         }
-        private void EnterMovingState()
+        private void EnterWalkingState()
         {
-            currentState = PetState.Moving;
-            petImage.Source = new BitmapImage(new Uri("Media/DoggoTest.png", UriKind.Relative));
-
+            currentState = PetState.Walking;
             var screen = GetCurrentScreen();
-            double maxX = screen.WorkingArea.Right / GetDpi().X - Width;
+            var dpi = GetDpi();
 
-            targetX = random.NextDouble() * maxX;
+            double minX = screen.WorkingArea.Left / dpi.X;
+            double maxX = screen.WorkingArea.Right / dpi.X - Width;
+
+            targetX = RandomRange(minX, maxX);
+            SetCurrentSpeed();
             stateStartTime = DateTime.Now;
+            double maxAnimSpeed = 0.05;
+            double minAnimSpeed = 0.2; 
+            double normalized = Math.Clamp(currentSpeed / maxSpeed, 0, 1);
+            double frameDuration = minAnimSpeed - normalized * (minAnimSpeed - maxAnimSpeed);
+
+            animationManager.SetAnimationSpeed(PetState.Walking, frameDuration);
+            UpdateSpriteDirection();
+        }
+        
+        private void SetCurrentSpeed()
+        {
+            bool biasedFaster = true;
+
+            if (biasedFaster)
+            {
+                double t = random.NextDouble();
+                t = 1.0 - Math.Pow(1.0 - t, 2.0);
+                currentSpeed = minSpeed + t * (maxSpeed - minSpeed);
+            }
+            else
+            // No bias
+            {
+                currentSpeed = random.NextDouble() * maxSpeed;
+            }
+
+            if(currentSpeed < minSpeed)
+            {
+                currentSpeed = minSpeed;
+            }
         }
         private void PetBehaviour()
         {
@@ -235,20 +398,29 @@ namespace Project_Pjonk
             {
                 case PetState.Idle:
                     velocity.X = 0;
-                    if((now-stateStartTime).TotalSeconds > random.Next(2, 5))
+                    if((now-stateStartTime).TotalSeconds > random.Next(1, 10))
                     {
-                        EnterMovingState();
+                        double jumpProbability = 0.3;
+                        if (random.NextDouble() < jumpProbability)
+                        {
+                            EnterJumpState();
+                        }
+                        else
+                        {
+                            EnterWalkingState();
+                        }
                     }
                     break;
 
-                case PetState.Moving:
+                case PetState.Walking:
                     MoveTowardsTarget();
 
                     if (HasReachedTarget())
                     {
                         velocity.X = 0;
-                        
-                        if(random.NextDouble() < 0.2)
+
+                        double sleepProbability = 0.05;
+                        if(random.NextDouble() < sleepProbability)
                         {
                             EnterSleepState();
                         }
@@ -262,9 +434,9 @@ namespace Project_Pjonk
 
                 case PetState.Sleeping:
                     velocity.X = 0;
-                    if((now -stateStartTime).TotalSeconds > random.Next(30, 48))
+                    if((now - stateStartTime).TotalSeconds > random.Next(45, 70))
                     {
-                        EnterMovingState();
+                        EnterWalkingState();
                     }
                         
                     break;
@@ -276,10 +448,6 @@ namespace Project_Pjonk
                         }
                     }
                     break;
-
-                case PetState.Falling:
-
-                    break;
                 default:
 
                     break;
@@ -287,15 +455,54 @@ namespace Project_Pjonk
 
 
         }
+        private void UpdateSpriteDirection()
+        {
+            if (currentState == PetState.Jumping)
+            {
+                if(velocity.X > 1)
+                {
+                    ((ScaleTransform)petImage.RenderTransform).ScaleX = 1;
+                }
+                else
+                {
+                    ((ScaleTransform)petImage.RenderTransform).ScaleX = -1;
+                }
+            }
+            else
+            {
+                if (Math.Sign(targetX - Left) < 0)
+                {
+                    ((ScaleTransform)petImage.RenderTransform).ScaleX = -1;
+                }
+                else
+                {
+                    ((ScaleTransform)petImage.RenderTransform).ScaleX = 1;
+                }
+            }
+        }
 
         // Physics
         private void ApplyGravity(double dt)
         {
+            DateTime now = DateTime.Now;
             if (!isGrounded)
             {
-                velocity.Y += Gravity * dt;
+                if (currentState == PetState.Jumping)
+                {
+                    velocity.Y += Gravity * dt;
+                }
+                else if(currentState != PetState.Jumping)
+                {
+                    velocity.Y += Gravity * dt;
+                }
 
-                if(velocity.Y > TerminalVelocity)
+                if (velocity.Y > 0 &&
+                    (currentState == PetState.Jumping || currentState == PetState.Static))
+                {
+                    currentState = PetState.Falling;
+                }
+
+                if (velocity.Y > TerminalVelocity)
                 {
                     velocity.Y = TerminalVelocity;
                 }
@@ -303,34 +510,45 @@ namespace Project_Pjonk
         }
         private void ApplyMovement(double dt)
         {
+            if (isDragged) return;
             position.X += velocity.X * dt;
             position.Y += velocity.Y * dt;
+            
             if (!isGrounded)
             {
                 velocity.X *= Math.Pow(HorizontalFriction, dt * 800);
 
             }
-            else if(currentState != PetState.Moving)
+            else if(currentState != PetState.Walking)
             {
                 velocity.X *= Math.Pow(HorizontalFriction, dt * 2400);
             }
 
         }
+
         private void GroundCollision()
         {
             var screen = GetCurrentScreen();
             double groundY = screen.WorkingArea.Bottom / GetDpi().Y - Height;
 
+            if (currentState == PetState.Jumping) return;
             if(position.Y >= groundY - GroundSnapTolerance)
             {
                 position.Y = groundY;
-                velocity.Y = 0;
                 if(currentState == PetState.Falling)
                 {
-                    currentState = PetState.Sliding;
+                    velocity.Y = 0;
+                    if (previousState == PetState.Jumping)
+                    {
+                        currentState = PetState.Idle;
+                    }
+                    else
+                    {
+                        currentState = PetState.Sliding;
+                    }
+                    isGrounded = true;
                     stateStartTime = DateTime.Now;
                 }
-                isGrounded = true;
             }
             else
             {
@@ -360,13 +578,14 @@ namespace Project_Pjonk
         // Helpers
         private Point GetMousePosOnScreen()
         {
-            Point mousePos = Mouse.GetPosition(null);
-            Point screenPos = petImage.PointToScreen(mousePos);
+            GetCursorPos(out POINT p); 
 
             PresentationSource source = PresentationSource.FromVisual(this);
-            Matrix transform = source.CompositionTarget.TransformFromDevice;
+            if (source?.CompositionTarget == null)
+                return new Point(p.X, p.Y);
 
-            return new(screenPos.X * transform.M11, screenPos.Y * transform.M22);
+            return source.CompositionTarget.TransformFromDevice
+                .Transform(new Point(p.X, p.Y));
         }
         private Screen GetCurrentScreen()
         {
@@ -400,6 +619,33 @@ namespace Project_Pjonk
         }
 
 
+        [DllImport("user32.dll")]
+        static extern bool GetCursorPos(out POINT lpPoint);
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct POINT
+        {
+            public int X;
+            public int Y;
+        }
+
+        [DllImport("user32.dll")]
+        static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+
+        [DllImport("user32.dll")]
+        static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
+        private const int GWL_EXSTYLE = -20;
+        private const int WS_EX_TOOLWINDOW = 0x00000080;
+
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+
+            var hwnd = new WindowInteropHelper(this).Handle;
+            int exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+            SetWindowLong(hwnd, GWL_EXSTYLE, exStyle | WS_EX_TOOLWINDOW);
+        }
 
 
     }
