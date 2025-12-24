@@ -23,11 +23,17 @@
     <None Remove="Media\DoggoTest.png" />
     <None Remove="Media\PuppyTest.png" />
     <None Remove="Media\SleepingDoggo.png" />
+    <None Remove="Media\Sprites\BrownIdleSheet.png" />
+    <None Remove="Media\Sprites\BrownJump.png" />
+    <None Remove="Media\Sprites\BrownSleepSheet.png" />
+    <None Remove="Media\Sprites\BrownStatic.png" />
+    <None Remove="Media\Sprites\BrownWalkSheet.png" />
     <None Remove="Media\Sprites\IdleSheet.png" />
     <None Remove="Media\Sprites\Jump.png" />
     <None Remove="Media\Sprites\Sleep.png" />
     <None Remove="Media\Sprites\SleepSheet.png" />
     <None Remove="Media\Sprites\Static.png" />
+    <None Remove="Media\Sprites\WalkSheet.png" />
     <None Remove="PuppyTest.jpg" />
     <None Remove="PuppyTest.png" />
     <None Remove="SpiderIcon.ico" />
@@ -43,19 +49,34 @@
     <Content Include="Media\SleepingDoggo.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Media\Sprites\BrownIdleSheet.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Media\Sprites\BrownJump.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Media\Sprites\BrownSleepSheet.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Media\Sprites\BrownStatic.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Media\Sprites\BrownWalkSheet.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Media\Sprites\IdleSheet.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Media\Sprites\Jump.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Media\Sprites\Sleep.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="Media\Sprites\SleepSheet.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Media\Sprites\Static.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Media\Sprites\WalkSheet.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="SpiderIcon.ico">

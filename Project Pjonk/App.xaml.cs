@@ -12,8 +12,8 @@ namespace Project_Pjonk
     {
         private TaskbarIcon _trayIcon = new();
 
-        PetWindow pet1 = new("Media/Sprites/Static.png", SystemParameters.FullPrimaryScreenWidth / 2);
-        PetWindow pet2 = new("Media/PuppyTest.png", 100.0);
+        PetWindow pet1 = new("Media/Sprites/Static.png", SystemParameters.FullPrimaryScreenWidth / 2, PetPresets.Kreatyna);
+        PetWindow pet2 = new("Media/Sprites/BrownStatic.png", 300.0, PetPresets.Sterydzia);
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
@@ -31,7 +31,7 @@ namespace Project_Pjonk
         private void InitializePetWindows()
         {
             pet1.Show();
-            //pet2.Show();
+            pet2.Show();
 
         }
 

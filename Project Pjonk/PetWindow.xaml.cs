@@ -35,6 +35,12 @@ namespace Project_Pjonk
         High
     }
 
+    public enum PetPresets
+    {
+        Kreatyna,
+        Sterydzia,
+
+    }
 
     public partial class PetWindow : Window
     {
@@ -44,11 +50,11 @@ namespace Project_Pjonk
         private const double TerminalVelocity = 7000;
         private const double GroundSnapTolerance = 5;
         private const double HorizontalFriction = 0.999;
-        private const double JumpVelocityMinY = -200; 
-        private const double JumpVelocityMaxY = -4000; 
-        private const double turboJumpVelocityY = -20000;
-        private const double JumpVelocityMinX = 300; 
-        private const double JumpVelocityMaxX = 2000;
+        private double JumpVelocityMinY = -200; 
+        private double JumpVelocityMaxY = -4000; 
+        private double turboJumpVelocityY = -20000;
+        private double JumpVelocityMinX = 300; 
+        private double JumpVelocityMaxX = 2000;
         private const double MaxDt = 1.0 / 30.0; // 30 FPS
         private const double MinDt = 0.0001;     
 
@@ -74,25 +80,82 @@ namespace Project_Pjonk
 
         private DateTime lastUpdate = DateTime.Now;
 
-        private double minSpeed = 100;
-        private double maxSpeed = 400;
+        private double minSpeed = 250;
+        private double maxSpeed = 700;
         private double currentSpeed = 0;
         private Point position;
-        private const double BaseSize = 64;
+        private double BaseSize = 32;
 
-        public PetWindow(string imagePath, double startX)
+        double jumpProbability = 0.35;
+        double sleepProbability = 0.05;
+        bool preferHighSpeeds = true;
+        int maxSleepTime = 45;
+        int maxIdleTime = 8;
+
+
+        private void PreSetWhite()
         {
-            // Animation
             animationManager.AddAnimation(PetState.Idle, new Animation("Media/Sprites/IdleSheet.png", 9, 0.2));
-            animationManager.AddAnimation(PetState.Walking, new Animation("Media/Sprites/Static.png", 1, 0.2));
+            animationManager.AddAnimation(PetState.Walking, new Animation("Media/Sprites/WalkSheet.png", 8, 0.2));
             animationManager.AddAnimation(PetState.Static, new Animation("Media/Sprites/Static.png", 1, 0.2));
             animationManager.AddAnimation(PetState.Sleeping, new Animation("Media/Sprites/SleepSheet.png", 21, 0.15));
             animationManager.AddAnimation(PetState.Jumping, new Animation("Media/Sprites/Jump.png", 1, 0.2));
 
-            // Temp hardcoded
+            Width = 32;
+            Height = 32;
+            // Uses default values 
+        }
+
+        private void PreSetBrown()
+        {
+            animationManager.AddAnimation(PetState.Idle, new Animation("Media/Sprites/BrownIdleSheet.png", 9, 0.2));
+            animationManager.AddAnimation(PetState.Walking, new Animation("Media/Sprites/BrownWalkSheet.png", 8, 0.2));
+            animationManager.AddAnimation(PetState.Static, new Animation("Media/Sprites/BrownStatic.png", 1, 0.2));
+            animationManager.AddAnimation(PetState.Sleeping, new Animation("Media/Sprites/BrownSleepSheet.png", 21, 0.15));
+            animationManager.AddAnimation(PetState.Jumping, new Animation("Media/Sprites/BrownJump.png", 1, 0.2));
+
             Width = 64;
             Height = 64;
-            // 
+            BaseSize = 64;
+
+            // Overrides default values 
+            maxSleepTime = 80;
+            maxIdleTime = 14;
+
+            preferHighSpeeds = false;
+            jumpProbability = 0.15;
+            sleepProbability = 0.15;
+            minSpeed = 100;
+            maxSpeed = 400;
+
+            JumpVelocityMinY = -200;
+            JumpVelocityMaxY = -2000;
+            turboJumpVelocityY = -4000;
+
+            JumpVelocityMinX = 100;
+            JumpVelocityMaxX = 800;
+
+        }
+        public PetWindow(string imagePath, double startX, PetPresets preset)
+        {
+
+            switch (preset)
+            {
+                case PetPresets.Kreatyna:
+                    PreSetWhite();
+                    break;
+
+                case PetPresets.Sterydzia:
+                    PreSetBrown();
+                    break;
+
+                default:
+                    PreSetWhite();
+                    break;
+
+            }
+
+    
             AllowsTransparency = true;
             WindowStyle = WindowStyle.None;
             ResizeMode = ResizeMode.NoResize;
@@ -165,10 +228,10 @@ namespace Project_Pjonk
             switch (currentState)
             {
                 case PetState.Sliding:
-                    animationManager.Play(PetState.Walking);
+                    animationManager.Play(PetState.Static);
                     break;
                 case PetState.Falling:
-                    animationManager.Play(PetState.Idle);
+                    animationManager.Play(PetState.Static);
                     break;
                 default:
                     animationManager.Play(currentState);
@@ -192,7 +255,7 @@ namespace Project_Pjonk
             switch (bias)
             {
                 case RandomBias.Low:
-                    t = (t*t*t);              
+                    t = (t*t);              
                     break;
 
                 case RandomBias.High:
@@ -357,18 +420,24 @@ namespace Project_Pjonk
             double minX = screen.WorkingArea.Left / dpi.X;
             double maxX = screen.WorkingArea.Right / dpi.X - Width;
 
-            targetX = RandomRange(minX, maxX);
+            if (preferHighSpeeds)
+            {
+                targetX = RandomRange(minX, maxX, RandomBias.High);
+            }
+            else
+            {
+                targetX = RandomRange(minX, maxX, RandomBias.Low);
+            }
             SetCurrentSpeed();
             stateStartTime = DateTime.Now;
-            double maxAnimSpeed = 0.05;
-            double minAnimSpeed = 0.2; 
+            double maxAnimSpeed = 0.03;
+            double minAnimSpeed = 0.10; 
             double normalized = Math.Clamp(currentSpeed / maxSpeed, 0, 1);
             double frameDuration = minAnimSpeed - normalized * (minAnimSpeed - maxAnimSpeed);
 
             animationManager.SetAnimationSpeed(PetState.Walking, frameDuration);
             UpdateSpriteDirection();
         }
-        
         private void SetCurrentSpeed()
         {
             bool biasedFaster = true;
@@ -398,9 +467,8 @@ namespace Project_Pjonk
             {
                 case PetState.Idle:
                     velocity.X = 0;
-                    if((now-stateStartTime).TotalSeconds > random.Next(1, 10))
+                    if((now-stateStartTime).TotalSeconds > random.Next(2, maxIdleTime))
                     {
-                        double jumpProbability = 0.3;
                         if (random.NextDouble() < jumpProbability)
                         {
                             EnterJumpState();
@@ -418,8 +486,6 @@ namespace Project_Pjonk
                     if (HasReachedTarget())
                     {
                         velocity.X = 0;
-
-                        double sleepProbability = 0.05;
                         if(random.NextDouble() < sleepProbability)
                         {
                             EnterSleepState();
@@ -434,7 +500,7 @@ namespace Project_Pjonk
 
                 case PetState.Sleeping:
                     velocity.X = 0;
-                    if((now - stateStartTime).TotalSeconds > random.Next(45, 70))
+                    if((now - stateStartTime).TotalSeconds > random.Next(20, maxSleepTime))
                     {
                         EnterWalkingState();
                     }
@@ -442,7 +508,7 @@ namespace Project_Pjonk
                     break;
                 case PetState.Sliding:
                     {
-                        if (Math.Abs(velocity.X) <= 3.0 || (now - stateStartTime).TotalSeconds > random.Next(6, 8))
+                        if (Math.Abs(velocity.X) <= 3.0 || (now - stateStartTime).TotalSeconds > random.Next(5, 8))
                         {
                             EnterIdleState();
                         }
