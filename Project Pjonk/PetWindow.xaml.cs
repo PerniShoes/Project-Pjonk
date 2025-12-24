@@ -84,7 +84,7 @@ namespace Project_Pjonk
         private double maxSpeed = 700;
         private double currentSpeed = 0;
         private Point position;
-        private double BaseSize = 32;
+        private double BaseSize = 64;
 
         double jumpProbability = 0.35;
         double sleepProbability = 0.05;
@@ -101,8 +101,8 @@ namespace Project_Pjonk
             animationManager.AddAnimation(PetState.Sleeping, new Animation("Media/Sprites/SleepSheet.png", 21, 0.15));
             animationManager.AddAnimation(PetState.Jumping, new Animation("Media/Sprites/Jump.png", 1, 0.2));
 
-            Width = 32;
-            Height = 32;
+            Width = 64;
+            Height = 64;
             // Uses default values 
         }
 
@@ -114,9 +114,9 @@ namespace Project_Pjonk
             animationManager.AddAnimation(PetState.Sleeping, new Animation("Media/Sprites/BrownSleepSheet.png", 21, 0.15));
             animationManager.AddAnimation(PetState.Jumping, new Animation("Media/Sprites/BrownJump.png", 1, 0.2));
 
-            Width = 64;
-            Height = 64;
-            BaseSize = 64;
+            Width = 32;
+            Height = 32;
+            BaseSize = 32;
 
             // Overrides default values 
             maxSleepTime = 80;
