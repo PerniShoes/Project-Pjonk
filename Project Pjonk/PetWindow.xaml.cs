@@ -39,6 +39,7 @@ namespace Project_Pjonk
     {
         Kreatyna,
         Sterydzia,
+        Trzeci,
 
     }
 
@@ -51,7 +52,7 @@ namespace Project_Pjonk
         private const double GroundSnapTolerance = 5;
         private const double HorizontalFriction = 0.999;
         private double JumpVelocityMinY = -200; 
-        private double JumpVelocityMaxY = -4000; 
+        private double JumpVelocityMaxY = -3000; 
         private double turboJumpVelocityY = -20000;
         private double JumpVelocityMinX = 300; 
         private double JumpVelocityMaxX = 2000;
@@ -81,10 +82,10 @@ namespace Project_Pjonk
         private DateTime lastUpdate = DateTime.Now;
 
         private double minSpeed = 250;
-        private double maxSpeed = 700;
+        private double maxSpeed = 600;
         private double currentSpeed = 0;
         private Point position;
-        private double BaseSize = 64;
+        private double BaseSize = 96;
 
         double jumpProbability = 0.35;
         double sleepProbability = 0.05;
@@ -93,7 +94,7 @@ namespace Project_Pjonk
         int maxIdleTime = 8;
 
 
-        private void PreSetWhite()
+        private void PresetWhite()
         {
             animationManager.AddAnimation(PetState.Idle, new Animation("Media/Sprites/IdleSheet.png", 9, 0.2));
             animationManager.AddAnimation(PetState.Walking, new Animation("Media/Sprites/WalkSheet.png", 8, 0.2));
@@ -101,12 +102,12 @@ namespace Project_Pjonk
             animationManager.AddAnimation(PetState.Sleeping, new Animation("Media/Sprites/SleepSheet.png", 21, 0.15));
             animationManager.AddAnimation(PetState.Jumping, new Animation("Media/Sprites/Jump.png", 1, 0.2));
 
-            Width = 64;
-            Height = 64;
+            Width = 96;
+            Height = 96;
             // Uses default values 
         }
 
-        private void PreSetBrown()
+        private void PresetBrown()
         {
             animationManager.AddAnimation(PetState.Idle, new Animation("Media/Sprites/BrownIdleSheet.png", 9, 0.2));
             animationManager.AddAnimation(PetState.Walking, new Animation("Media/Sprites/BrownWalkSheet.png", 8, 0.2));
@@ -114,16 +115,16 @@ namespace Project_Pjonk
             animationManager.AddAnimation(PetState.Sleeping, new Animation("Media/Sprites/BrownSleepSheet.png", 21, 0.15));
             animationManager.AddAnimation(PetState.Jumping, new Animation("Media/Sprites/BrownJump.png", 1, 0.2));
 
-            Width = 32;
-            Height = 32;
-            BaseSize = 32;
+            Width = 64;
+            Height = 64;
+            BaseSize = 64;
 
             // Overrides default values 
-            maxSleepTime = 80;
+            maxSleepTime = 60;
             maxIdleTime = 14;
 
             preferHighSpeeds = false;
-            jumpProbability = 0.15;
+            jumpProbability = 0.20;
             sleepProbability = 0.15;
             minSpeed = 100;
             maxSpeed = 400;
@@ -136,21 +137,54 @@ namespace Project_Pjonk
             JumpVelocityMaxX = 800;
 
         }
+
+        private void PresetTrzeci()
+        {
+            animationManager.AddAnimation(PetState.Idle, new Animation("Media/Sprites/TrzeciIdleSheet.png", 14, 0.2));
+            animationManager.AddAnimation(PetState.Walking, new Animation("Media/Sprites/TrzeciWalkSheet.png", 8, 0.2));
+            animationManager.AddAnimation(PetState.Static, new Animation("Media/Sprites/TrzeciStatic.png", 1, 0.2));
+            animationManager.AddAnimation(PetState.Sleeping, new Animation("Media/Sprites/TrzeciSleepSheet.png", 21, 0.15));
+            animationManager.AddAnimation(PetState.Jumping, new Animation("Media/Sprites/TrzeciJump.png", 1, 0.2));
+
+            Width = 48;
+            Height = 48;
+            BaseSize = 48;
+
+            // Overrides default values 
+            maxSleepTime = 75;
+            maxIdleTime = 7;
+
+            preferHighSpeeds = true;
+            jumpProbability = 0.20;
+            sleepProbability = 0.20;
+            minSpeed = 400;
+            maxSpeed = 1000;
+
+            JumpVelocityMinY = -200;
+            JumpVelocityMaxY = -3000;
+            turboJumpVelocityY = -10000;
+
+            JumpVelocityMinX = 500;
+            JumpVelocityMaxX = 4500;
+
+        }
         public PetWindow(string imagePath, double startX, PetPresets preset)
         {
 
             switch (preset)
             {
                 case PetPresets.Kreatyna:
-                    PreSetWhite();
+                    PresetWhite();
                     break;
 
                 case PetPresets.Sterydzia:
-                    PreSetBrown();
+                    PresetBrown();
                     break;
-
+                case PetPresets.Trzeci:
+                    PresetTrzeci();
+                    break;
                 default:
-                    PreSetWhite();
+                    PresetWhite();
                     break;
 
             }

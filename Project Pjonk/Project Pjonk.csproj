@@ -33,6 +33,11 @@
     <None Remove="Media\Sprites\Sleep.png" />
     <None Remove="Media\Sprites\SleepSheet.png" />
     <None Remove="Media\Sprites\Static.png" />
+    <None Remove="Media\Sprites\TrzeciIdleSheet.png" />
+    <None Remove="Media\Sprites\TrzeciJump.png" />
+    <None Remove="Media\Sprites\TrzeciSleepSheet.png" />
+    <None Remove="Media\Sprites\TrzeciStatic.png" />
+    <None Remove="Media\Sprites\TrzeciWalkSheet.png" />
     <None Remove="Media\Sprites\WalkSheet.png" />
     <None Remove="PuppyTest.jpg" />
     <None Remove="PuppyTest.png" />
@@ -74,6 +79,21 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Media\Sprites\Static.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Media\Sprites\TrzeciIdleSheet.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Media\Sprites\TrzeciJump.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Media\Sprites\TrzeciSleepSheet.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Media\Sprites\TrzeciStatic.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Media\Sprites\TrzeciWalkSheet.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Media\Sprites\WalkSheet.png">

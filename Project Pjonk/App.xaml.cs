@@ -14,6 +14,7 @@ namespace Project_Pjonk
 
         PetWindow pet1 = new("Media/Sprites/Static.png", SystemParameters.FullPrimaryScreenWidth / 2, PetPresets.Kreatyna);
         PetWindow pet2 = new("Media/Sprites/BrownStatic.png", 300.0, PetPresets.Sterydzia);
+        PetWindow pet3 = new("Media/Sprites/BrownStatic.png", 500.0, PetPresets.Trzeci);
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
@@ -32,7 +33,7 @@ namespace Project_Pjonk
         {
             pet1.Show();
             pet2.Show();
-
+            pet3.Show();
         }
 
         private void InitializeTaskbarIcon()
@@ -75,6 +76,7 @@ namespace Project_Pjonk
             {
                 pet1?.TeleportPetToScreen();
                 pet2?.TeleportPetToScreen();
+                pet3?.TeleportPetToScreen();
             });
         }
         private void SetPetScale(double scale)
@@ -83,6 +85,7 @@ namespace Project_Pjonk
             {
                 pet1?.SetScale(scale);
                 pet2?.SetScale(scale);
+                pet3?.SetScale(scale);
             });
         }
 
