@@ -7,7 +7,7 @@ Besides some UI lags it works well. Spiders stay in the screen space they are mo
 Works on multi-screen setups (even with varying resolutions/scales)
 
 Tools:   
-Aseprite (PixelArt), 
+Aseprite (PixelArt),   
 VS, .NET framework, WPF, C#
 #
 <img width="600" height="200" alt="Screenshot_4" src="https://github.com/user-attachments/assets/97f7652b-d84f-401e-af73-ff73ada2c0f9" />
