@@ -1,9 +1,7 @@
 ### Project Pjonk
-
 # A desktop pet app for a friend's birthday
 I drew, animated and programmed his pet spiders to life.
 
-#
 Summary:   
 Besides some UI lags it works well. Spiders stay in the screen space they are moved to and have individual behaviours.
 Works on multi-screen setups (even with varying resolutions/scales)
